@@ -6,16 +6,23 @@ public class McDonaldSystem {
     public static Scanner sc = new Scanner(System.in);
     public static int orderNum = 1;
     public static ArrayList<CartItem> cart = new ArrayList<>(); // Le panier global
-    
+
+
+    private static void addAllItemByDefaultToInventory(){
+        inventory.add(new MainFood("Big Mac", 6.99, 50));
+        inventory.add(new MainFood("Quarter Pounder", 7.49, 40));
+        inventory.add(new MainFood("McChicken", 5.99, 45));
+        inventory.add(new Snack("Frites", 3.49, 100 ));
+        inventory.add(new Snack("Nuggets (6)", 4.99, 60));
+        inventory.add(new Drink("Coca-Cola", 2.49, 80, "Medium"));
+        inventory.add(new Drink("Sprite", 2.49, 70, "Medium"));
+        inventory.add(new Drink("Jus d'orange", 2.99, 50 , "Medium"));
+    }
+
+
+
     public static void main(String[] args) {
-        inventory.add(new Item("Big Mac", 6.99, 50, "main"));
-        inventory.add(new Item("Quarter Pounder", 7.49, 40, "main"));
-        inventory.add(new Item("McChicken", 5.99, 45, "main"));
-        inventory.add(new Item("Frites", 3.49, 100, "snack"));
-        inventory.add(new Item("Nuggets (6)", 4.99, 60, "snack"));
-        inventory.add(new Item("Coca-Cola", 2.49, 80, "drink", "Medium"));
-        inventory.add(new Item("Sprite", 2.49, 70, "drink", "Medium"));
-        inventory.add(new Item("Jus d'orange", 2.99, 50, "drink", "Medium"));
+       addAllItemByDefaultToInventory();
         
         System.out.println("=== MCDONALDS ===");
         
@@ -36,33 +43,47 @@ public class McDonaldSystem {
             }
         }
     }
-    
-    // Méthode énorme avec beaucoup de logique (violation SRP)
-    public static void clientMode() {
+
+    private static void messageGrettings(){
         System.out.print("Nom: ");
         sc.nextLine();
         String name = sc.nextLine();
         System.out.println("Bienvenue " + name);
+
+    }
+    private static void clearTheCart(){
+        cart.clear();
+    }
+    private static void printClientModeDefaultChoice(){
+        System.out.println("\n1. Voir menu");
+        System.out.println("2. Ajouter TRIO au panier");
+        System.out.println("3. Ajouter item au panier");
+        System.out.println("4. Voir panier");
+        System.out.println("5. Retirer du panier");
+        System.out.println("6. Passer commande");
+        System.out.println("7. Retour");
+        System.out.print("Choix: ");
+    }
+    private static void printTheWordMenu(){
+
+        System.out.println("\n=== MENU ===");
+    }
+    // Méthode énorme avec beaucoup de logique (violation SRP)
+    public static void clientMode() {
+       printClientModeDefaultChoice();
         
         // Vider le panier pour ce client
-        cart.clear();
+        clearTheCart();
         
         boolean loop = true;
         while (loop) {
-            System.out.println("\n1. Voir menu");
-            System.out.println("2. Ajouter TRIO au panier");
-            System.out.println("3. Ajouter item au panier");
-            System.out.println("4. Voir panier");
-            System.out.println("5. Retirer du panier");
-            System.out.println("6. Passer commande");
-            System.out.println("7. Retour");
-            System.out.print("Choix: ");
+
             
             int choice = sc.nextInt();
             
             if (choice == 1) {
                 // Afficher menu directement ici (code dupliqué)
-                System.out.println("\n=== MENU ===");
+                printTheWordMenu();
                 for (int i = 0; i < inventory.size(); i++) {
                     Item it = inventory.get(i);
                     System.out.println(it.name + " - " + it.price + "$ (stock: " + it.stock + ")");
@@ -233,14 +254,14 @@ public class McDonaldSystem {
                         System.out.println("========================");
                         
                         // Vider le panier
-                        cart.clear();
+                        clearTheCart();
                         System.out.println("\n✓ Commande passée avec succès!");
                     }
                 }
                 
             } else if (choice == 6) {
                 // Vider le panier en quittant
-                cart.clear();
+                clearTheCart();
                 loop = false;
             }
         }
@@ -322,7 +343,7 @@ public class McDonaldSystem {
                 if (t.equals("drink")) {
                     System.out.print("Taille: ");
                     String sz = sc.next();
-                    inventory.add(new Item(n, p, s, t, sz));
+                    inventory.add(new Drink(n, p, s, sz));
                 } else {
                     inventory.add(new Item(n, p, s, t));
                 }
