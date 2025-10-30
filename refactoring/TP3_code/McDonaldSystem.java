@@ -22,10 +22,11 @@ public class McDonaldSystem {
 
 
     public static void main(String[] args) {
+
        addAllItemByDefaultToInventory();
-        
+
         System.out.println("=== MCDONALDS ===");
-        
+
         while (true) {
             System.out.println("\n1. Mode Client");
             System.out.println("2. Mode Inventaire");
@@ -64,42 +65,54 @@ public class McDonaldSystem {
         System.out.println("7. Retour");
         System.out.print("Choix: ");
     }
-    private static void printTheWordMenu(){
+    private static void printTheMenu(){
 
         System.out.println("\n=== MENU ===");
+        for (int i = 0; i < inventory.size(); i++) {
+            Item it = inventory.get(i);
+            System.out.println(it.name + " - " + it.price + "$ (stock: " + it.stock + ")");
+        }
+    }
+    private static List<Item> getAllMainItem(){
+        ArrayList<Item> mains = new ArrayList<>();
+        for (int i = 0; i < inventory.size(); i++) {
+            if (inventory.get(i).type.equals("main")) {
+                mains.add(inventory.get(i));
+            }
+        }
+        return mains;
+    }
+
+    private static void printAllTheMainItem(List<Item> mains){
+        for (int i = 0; i < mains.size(); i++) {
+            System.out.println((i+1) + ". " + mains.get(i).toString());
+        }
     }
     // Méthode énorme avec beaucoup de logique (violation SRP)
     public static void clientMode() {
-       printClientModeDefaultChoice();
+
+        messageGrettings();
+
+
         
         // Vider le panier pour ce client
         clearTheCart();
         
         boolean loop = true;
         while (loop) {
-
+            printClientModeDefaultChoice();
             
             int choice = sc.nextInt();
             
             if (choice == 1) {
                 // Afficher menu directement ici (code dupliqué)
-                printTheWordMenu();
-                for (int i = 0; i < inventory.size(); i++) {
-                    Item it = inventory.get(i);
-                    System.out.println(it.name + " - " + it.price + "$ (stock: " + it.stock + ")");
-                }
+                printTheMenu();
+
             } else if (choice == 2) {
                 // Ajouter un trio au panier - tout dans la même méthode!
                 System.out.println("\nPlats principaux:");
-                ArrayList<Item> mains = new ArrayList<>();
-                for (int i = 0; i < inventory.size(); i++) {
-                    if (inventory.get(i).type.equals("main")) {
-                        mains.add(inventory.get(i));
-                    }
-                }
-                for (int i = 0; i < mains.size(); i++) {
-                    System.out.println((i+1) + ". " + mains.get(i).name + " - " + mains.get(i).price + "$");
-                }
+                List<Item> mains = getAllMainItem();
+                printAllTheMainItem(mains);
                 System.out.print("Choix: ");
                 int m = sc.nextInt() - 1;
                 
@@ -145,11 +158,7 @@ public class McDonaldSystem {
                 
             } else if (choice == 3) {
                 // Ajouter item individuel au panier
-                System.out.println("\n=== MENU ===");
-                for (int i = 0; i < inventory.size(); i++) {
-                    Item it = inventory.get(i);
-                    System.out.println((i+1) + ". " + it.name + " - " + it.price + "$ (stock: " + it.stock + ")");
-                }
+                printTheMenu();
                 System.out.print("Choix: ");
                 int itemChoice = sc.nextInt() - 1;
                 
