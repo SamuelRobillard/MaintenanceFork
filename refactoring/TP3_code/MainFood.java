@@ -12,6 +12,10 @@ public class MainFood extends Item{
 
     @Override
     public String toString() {
-       return "name - " + name  + "price : "  + price + "$";
+       return "name - " + this.name  + "price : "  + this.price + "$";
+    }
+
+    public String afficheSomeInfo() {
+        return "name - " + this.name  + "price : "  + this.price + "$";
     }
 }

@@ -12,4 +12,14 @@ public class Item {
         stock = s;
         type = t;
     }
+
+    @Override
+    public String toString() {
+        return "Item{" +
+                "name='" + name + '\'' +
+                ", price=" + price +
+                ", stock=" + stock +
+                ", type='" + type + '\'' +
+                '}';
+    }
 }

@@ -85,7 +85,102 @@ public class McDonaldSystem {
 
     private static void printAllTheMainItem(List<Item> mains){
         for (int i = 0; i < mains.size(); i++) {
-            System.out.println((i+1) + ". " + mains.get(i).toString());
+
+            Item it = mains.get(i);
+
+            System.out.println(i+ 1 + " " + it.name + " - " + it.price + "$ (stock: " + it.stock + ")");
+
+        }
+    }
+
+
+    public static int selectMainFoodToAdd(){
+        List<Item> mains = getAllMainItem();
+        System.out.println("\nPlats principaux:");
+        printAllTheMainItem(mains);
+        System.out.print("Choix: ");
+        int m = sc.nextInt() - 1;
+
+        return m;
+    }
+
+
+    public static List<Item> getAllSnackInInventory(){
+        ArrayList<Item> snacks = new ArrayList<>();
+        for (int i = 0; i < inventory.size(); i++) {
+            if (inventory.get(i).type.equals("snack")) {
+                snacks.add(inventory.get(i));
+            }
+        }
+        return snacks;
+    }
+    public static List<Item> getAllDrinkInInventory(){
+        ArrayList<Item> drinks = new ArrayList<>();
+        for (int i = 0; i < inventory.size(); i++) {
+            if (inventory.get(i).type.equals("drink")) {
+                drinks.add(inventory.get(i));
+            }
+        }
+        return drinks;
+    }
+    public static void printAllSnackChoice(List<Item> snacks){
+        for (int i = 0; i < snacks.size(); i++) {
+            System.out.println((i+1) + ". " + snacks.get(i).name + " - " + snacks.get(i).price + "$" + snacks.get(i).stock);
+        }
+    }
+    public static void printAllDrinkChoice(List<Item> drinks){
+        for (int i = 0; i < drinks.size(); i++) {
+            System.out.println((i+1) + ". " + drinks.get(i).name + " - " + drinks.get(i).price + "$" + drinks.get(i).stock);
+        }
+    }
+
+
+    public static void addTrioToCart() {
+        // Sélectionner le plat principal, l'accompagnement et la boisson
+        Item mainFood = selectItemFromInventory(getAllMainItem(), "Plats principaux");
+        Item snack = selectItemFromInventory(getAllSnackInInventory(), "Accompagnements");
+        Item drink = selectItemFromInventory(getAllDrinkInInventory(), "Boissons");
+
+        // Vérifier si la sélection est valide et si le stock est suffisant
+        if (mainFood != null && snack != null && drink != null) {
+            if (mainFood.stock > 0 && snack.stock > 0 && drink.stock > 0) {
+                CartItem trio = new CartItem(mainFood, snack, drink);
+                cart.add(trio);
+                System.out.println("✓ Trio ajouté au panier!");
+            } else {
+                System.out.println("ERREUR: Stock insuffisant pour ce trio!");
+            }
+        } else {
+            System.out.println("ERREUR: Choix invalide");
+        }
+    }
+
+    // Méthode générique pour sélectionner un élément d'un type donné
+    private static Item selectItemFromInventory(List<Item> items, String category) {
+        if (items.isEmpty()) {
+            System.out.println("Aucun item disponible dans la catégorie " + category);
+            return null;
+        }
+
+        System.out.println("\n" + category + ":");
+        printAllItemsChoice(items);  // Affiche tous les éléments dans le menu
+        System.out.print("Choix: ");
+        int choice = sc.nextInt() - 1;
+
+        // Vérifier si l'indice choisi est valide
+        if (choice >= 0 && choice < items.size()) {
+            return items.get(choice);
+        } else {
+            System.out.println("ERREUR: Choix invalide");
+            return null;
+        }
+    }
+
+
+    private static void printAllItemsChoice(List<Item> items) {
+        for (int i = 0; i < items.size(); i++) {
+            Item item = items.get(i);
+            System.out.println((i + 1) + ". " + item.name + " - " + item.price + "$ (stock: " + item.stock + ")");
         }
     }
     // Méthode énorme avec beaucoup de logique (violation SRP)
@@ -109,53 +204,9 @@ public class McDonaldSystem {
                 printTheMenu();
 
             } else if (choice == 2) {
-                // Ajouter un trio au panier - tout dans la même méthode!
-                System.out.println("\nPlats principaux:");
-                List<Item> mains = getAllMainItem();
-                printAllTheMainItem(mains);
-                System.out.print("Choix: ");
-                int m = sc.nextInt() - 1;
-                
-                System.out.println("\nAccompagnements:");
-                ArrayList<Item> snacks = new ArrayList<>();
-                for (int i = 0; i < inventory.size(); i++) {
-                    if (inventory.get(i).type.equals("snack")) {
-                        snacks.add(inventory.get(i));
-                    }
-                }
-                for (int i = 0; i < snacks.size(); i++) {
-                    System.out.println((i+1) + ". " + snacks.get(i).name + " - " + snacks.get(i).price + "$");
-                }
-                System.out.print("Choix: ");
-                int s = sc.nextInt() - 1;
-                
-                System.out.println("\nBoissons:");
-                ArrayList<Item> drinks = new ArrayList<>();
-                for (int i = 0; i < inventory.size(); i++) {
-                    if (inventory.get(i).type.equals("drink")) {
-                        drinks.add(inventory.get(i));
-                    }
-                }
-                for (int i = 0; i < drinks.size(); i++) {
-                    System.out.println((i+1) + ". " + drinks.get(i).name + " - " + drinks.get(i).price + "$");
-                }
-                System.out.print("Choix: ");
-                int d = sc.nextInt() - 1;
-                
-                // Vérifier indices
-                if (m >= 0 && m < mains.size() && s >= 0 && s < snacks.size() && d >= 0 && d < drinks.size()) {
-                    // Vérifier stock AVANT d'ajouter au panier
-                    if (mains.get(m).stock > 0 && snacks.get(s).stock > 0 && drinks.get(d).stock > 0) {
-                        CartItem trio = new CartItem(mains.get(m), snacks.get(s), drinks.get(d));
-                        cart.add(trio);
-                        System.out.println("✓ Trio ajouté au panier!");
-                    } else {
-                        System.out.println("ERREUR: Stock insuffisant pour ce trio!");
-                    }
-                } else {
-                    System.out.println("ERREUR: Choix invalide");
-                }
-                
+
+                addTrioToCart();
+
             } else if (choice == 3) {
                 // Ajouter item individuel au panier
                 printTheMenu();
@@ -275,19 +326,23 @@ public class McDonaldSystem {
             }
         }
     }
-    
+
+    public static void printInventoryChoice(){
+        System.out.println("\n=== INVENTAIRE ===");
+        System.out.println("1. Afficher inventaire");
+        System.out.println("2. Ajouter stock");
+        System.out.println("3. Retirer stock");
+        System.out.println("4. Ajouter nouvel item");
+        System.out.println("5. Retour");
+        System.out.print("Choix: ");
+    }
+
     // Mode inventaire - accès direct à la liste (violation encapsulation)
     public static void inventoryMode() {
         boolean running = true;
         while (running) {
-            System.out.println("\n=== INVENTAIRE ===");
-            System.out.println("1. Afficher inventaire");
-            System.out.println("2. Ajouter stock");
-            System.out.println("3. Retirer stock");
-            System.out.println("4. Ajouter nouvel item");
-            System.out.println("5. Retour");
-            System.out.print("Choix: ");
-            
+
+            printInventoryChoice();
             int choice = sc.nextInt();
             
             if (choice == 1) {
