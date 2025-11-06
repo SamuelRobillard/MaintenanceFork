@@ -83,26 +83,10 @@ public class McDonaldSystem {
         return mains;
     }
 
-    private static void printAllTheMainItem(List<Item> mains){
-        for (int i = 0; i < mains.size(); i++) {
-
-            Item it = mains.get(i);
-
-            System.out.println(i+ 1 + " " + it.name + " - " + it.price + "$ (stock: " + it.stock + ")");
-
-        }
-    }
 
 
-    public static int selectMainFoodToAdd(){
-        List<Item> mains = getAllMainItem();
-        System.out.println("\nPlats principaux:");
-        printAllTheMainItem(mains);
-        System.out.print("Choix: ");
-        int m = sc.nextInt() - 1;
 
-        return m;
-    }
+
 
 
     public static List<Item> getAllSnackInInventory(){
@@ -123,15 +107,9 @@ public class McDonaldSystem {
         }
         return drinks;
     }
-    public static void printAllSnackChoice(List<Item> snacks){
-        for (int i = 0; i < snacks.size(); i++) {
-            System.out.println((i+1) + ". " + snacks.get(i).name + " - " + snacks.get(i).price + "$" + snacks.get(i).stock);
-        }
-    }
-    public static void printAllDrinkChoice(List<Item> drinks){
-        for (int i = 0; i < drinks.size(); i++) {
-            System.out.println((i+1) + ". " + drinks.get(i).name + " - " + drinks.get(i).price + "$" + drinks.get(i).stock);
-        }
+
+    public static boolean isStockAvailable(Item item, int quantity) {
+        return item.stock >= quantity;
     }
 
 
@@ -183,18 +161,130 @@ public class McDonaldSystem {
             System.out.println((i + 1) + ". " + item.name + " - " + item.price + "$ (stock: " + item.stock + ")");
         }
     }
+
+    private static void removeFromCart(){
+        if (cart.size() == 0) {
+            System.out.println("\nPanier vide!");
+        } else {
+            System.out.println("\n=== VOTRE PANIER ===");
+            for (int i = 0; i < cart.size(); i++) {
+                CartItem ci = cart.get(i);
+                System.out.printf("%d. %s - %.2f$\n", (i+1), ci.getDescription(), ci.getPrice());
+            }
+            System.out.print("\nNuméro de l'item à retirer (0 pour annuler): ");
+            int removeChoice = sc.nextInt();
+
+            if (removeChoice > 0 && removeChoice <= cart.size()) {
+                CartItem removed = cart.remove(removeChoice - 1);
+                System.out.println("✓ " + removed.getDescription() + " retiré du panier!");
+            } else if (removeChoice != 0) {
+                System.out.println("ERREUR: Choix invalide");
+            }
+        }
+    }
+    private static void viewCart(){
+        if (cart.size() == 0) {
+            System.out.println("\nPanier vide!");
+        } else {
+            System.out.println("\n=== VOTRE PANIER ===");
+            double total = 0;
+            for (int i = 0; i < cart.size(); i++) {
+                CartItem ci = cart.get(i);
+                System.out.printf("%d. %s - %.2f$\n", (i+1), ci.getDescription(), ci.getPrice());
+                total += ci.getPrice();
+            }
+            System.out.println("--------------------");
+            System.out.printf("TOTAL: %.2f$\n", total);
+        }
+    }
+    private static void addItemToCart(){
+        printTheMenu();
+        System.out.print("Choix: ");
+        int itemChoice = sc.nextInt() - 1;
+
+        if (itemChoice >= 0 && itemChoice < inventory.size()) {
+            Item selectedItem = inventory.get(itemChoice);
+            // Vérifier stock AVANT d'ajouter au panier
+            if (selectedItem.stock > 0) {
+                CartItem cartItem = new CartItem(selectedItem);
+                cart.add(cartItem);
+                System.out.println("✓ " + selectedItem.name + " ajouté au panier!");
+            } else {
+                System.out.println("ERREUR: Plus de stock pour " + selectedItem.name);
+            }
+        } else {
+            System.out.println("ERREUR: Choix invalide");
+        }
+    }
+
+
+    private static void placeOrder(){
+        if (cart.size() == 0) {
+            System.out.println("\nPanier vide! Ajoutez des items d'abord.");
+        } else {
+            // Vérifier stock pour tous les items
+            boolean stockOk = true;
+            for (int i = 0; i < cart.size(); i++) {
+                CartItem ci = cart.get(i);
+                if (ci.isTrio) {
+                    if (ci.item.stock <= 0 || ci.trioSnack.stock <= 0 || ci.trioDrink.stock <= 0) {
+                        stockOk = false;
+                        System.out.println("ERREUR: Stock insuffisant pour " + ci.getDescription());
+                    }
+                } else {
+                    if (ci.item.stock <= 0) {
+                        stockOk = false;
+                        System.out.println("ERREUR: Stock insuffisant pour " + ci.item.name);
+                    }
+                }
+            }
+
+            if (stockOk) {
+                // Retirer du stock
+                for (int i = 0; i < cart.size(); i++) {
+                    CartItem ci = cart.get(i);
+                    if (ci.isTrio) {
+                        ci.item.stock--;
+                        ci.trioSnack.stock--;
+                        ci.trioDrink.stock--;
+                    } else {
+                        ci.item.stock--;
+                    }
+                }
+
+                // Afficher reçu
+                System.out.println("\n========= RECU =========");
+                System.out.println("Commande #" + orderNum);
+                orderNum++;
+                double total = 0;
+                for (int i = 0; i < cart.size(); i++) {
+                    CartItem ci = cart.get(i);
+                    System.out.printf("%s - %.2f$\n", ci.getDescription(), ci.getPrice());
+                    total += ci.getPrice();
+                }
+                System.out.println("------------------------");
+                System.out.printf("TOTAL: %.2f$\n", total);
+                System.out.println("========================");
+
+                // Vider le panier
+                clearTheCart();
+                System.out.println("\n✓ Commande passée avec succès!");
+            }
+        }
+    }
+
     // Méthode énorme avec beaucoup de logique (violation SRP)
     public static void clientMode() {
 
         messageGrettings();
 
-
-        
         // Vider le panier pour ce client
         clearTheCart();
         
         boolean loop = true;
         while (loop) {
+
+
             printClientModeDefaultChoice();
             
             int choice = sc.nextInt();
@@ -209,117 +299,21 @@ public class McDonaldSystem {
 
             } else if (choice == 3) {
                 // Ajouter item individuel au panier
-                printTheMenu();
-                System.out.print("Choix: ");
-                int itemChoice = sc.nextInt() - 1;
-                
-                if (itemChoice >= 0 && itemChoice < inventory.size()) {
-                    Item selectedItem = inventory.get(itemChoice);
-                    // Vérifier stock AVANT d'ajouter au panier
-                    if (selectedItem.stock > 0) {
-                        CartItem cartItem = new CartItem(selectedItem);
-                        cart.add(cartItem);
-                        System.out.println("✓ " + selectedItem.name + " ajouté au panier!");
-                    } else {
-                        System.out.println("ERREUR: Plus de stock pour " + selectedItem.name);
-                    }
-                } else {
-                    System.out.println("ERREUR: Choix invalide");
-                }
+               addItemToCart();
                 
             } else if (choice == 4) {
                 // Voir panier
-                if (cart.size() == 0) {
-                    System.out.println("\nPanier vide!");
-                } else {
-                    System.out.println("\n=== VOTRE PANIER ===");
-                    double total = 0;
-                    for (int i = 0; i < cart.size(); i++) {
-                        CartItem ci = cart.get(i);
-                        System.out.printf("%d. %s - %.2f$\n", (i+1), ci.getDescription(), ci.getPrice());
-                        total += ci.getPrice();
-                    }
-                    System.out.println("--------------------");
-                    System.out.printf("TOTAL: %.2f$\n", total);
-                }
+               viewCart();
                 
             } else if (choice == 5) {
                 // Retirer du panier
-                if (cart.size() == 0) {
-                    System.out.println("\nPanier vide!");
-                } else {
-                    System.out.println("\n=== VOTRE PANIER ===");
-                    for (int i = 0; i < cart.size(); i++) {
-                        CartItem ci = cart.get(i);
-                        System.out.printf("%d. %s - %.2f$\n", (i+1), ci.getDescription(), ci.getPrice());
-                    }
-                    System.out.print("\nNuméro de l'item à retirer (0 pour annuler): ");
-                    int removeChoice = sc.nextInt();
-                    
-                    if (removeChoice > 0 && removeChoice <= cart.size()) {
-                        CartItem removed = cart.remove(removeChoice - 1);
-                        System.out.println("✓ " + removed.getDescription() + " retiré du panier!");
-                    } else if (removeChoice != 0) {
-                        System.out.println("ERREUR: Choix invalide");
-                    }
-                }
+               removeFromCart();
                 
             } else if (choice == 6) {
                 // Passer la commande
-                if (cart.size() == 0) {
-                    System.out.println("\nPanier vide! Ajoutez des items d'abord.");
-                } else {
-                    // Vérifier stock pour tous les items
-                    boolean stockOk = true;
-                    for (int i = 0; i < cart.size(); i++) {
-                        CartItem ci = cart.get(i);
-                        if (ci.isTrio) {
-                            if (ci.item.stock <= 0 || ci.trioSnack.stock <= 0 || ci.trioDrink.stock <= 0) {
-                                stockOk = false;
-                                System.out.println("ERREUR: Stock insuffisant pour " + ci.getDescription());
-                            }
-                        } else {
-                            if (ci.item.stock <= 0) {
-                                stockOk = false;
-                                System.out.println("ERREUR: Stock insuffisant pour " + ci.item.name);
-                            }
-                        }
-                    }
-                    
-                    if (stockOk) {
-                        // Retirer du stock
-                        for (int i = 0; i < cart.size(); i++) {
-                            CartItem ci = cart.get(i);
-                            if (ci.isTrio) {
-                                ci.item.stock--;
-                                ci.trioSnack.stock--;
-                                ci.trioDrink.stock--;
-                            } else {
-                                ci.item.stock--;
-                            }
-                        }
-                        
-                        // Afficher reçu
-                        System.out.println("\n========= RECU =========");
-                        System.out.println("Commande #" + orderNum);
-                        orderNum++;
-                        double total = 0;
-                        for (int i = 0; i < cart.size(); i++) {
-                            CartItem ci = cart.get(i);
-                            System.out.printf("%s - %.2f$\n", ci.getDescription(), ci.getPrice());
-                            total += ci.getPrice();
-                        }
-                        System.out.println("------------------------");
-                        System.out.printf("TOTAL: %.2f$\n", total);
-                        System.out.println("========================");
-                        
-                        // Vider le panier
-                        clearTheCart();
-                        System.out.println("\n✓ Commande passée avec succès!");
-                    }
-                }
+              placeOrder();
                 
-            } else if (choice == 6) {
+            } else if (choice == 7) {
                 // Vider le panier en quittant
                 clearTheCart();
                 loop = false;
