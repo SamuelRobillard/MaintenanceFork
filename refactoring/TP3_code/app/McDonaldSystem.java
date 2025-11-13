@@ -1,6 +1,6 @@
 package app;
 
-import service.InventoryService;
+import service.*;
 import ui.ClientMode;
 import ui.InventoryMode;
 
@@ -8,58 +8,86 @@ import java.util.Scanner;
 
 public class McDonaldSystem {
 
-    private final Scanner sc = new Scanner(System.in);
+    private final Scanner scanner = new Scanner(System.in);
 
-    public Scanner getScanner() { return sc; }
+    // Services avec interfaces
+    private final IInventoryService inventoryService = new InventoryService();
+    private final ICartService cartService = new CartService();
+    private final IOrderService orderService = new OrderService(cartService);
+
+    public Scanner getScanner() { return scanner; }
 
     public static void main(String[] args) {
         McDonaldSystem app = new McDonaldSystem();
-        InventoryService.addDefaultItems();
+        app.inventoryService.addDefaultItems();
 
-        System.out.println("=== MCDONALDS ===");
+        System.out.println("=== BIENVENUE CHEZ MCDONALD'S ===");
 
         boolean running = true;
         while (running) {
-            System.out.println("\n1. Mode Client");
-            System.out.println("2. Mode Inventaire");
-            System.out.println("3. Quitter");
-            System.out.print("Choix: ");
-
-            int choice = app.readInt();
-            switch (choice) {
-                case 1 -> new ClientMode(app).start();
-                case 2 -> new InventoryMode(app).start();
-                case 3 -> running = false;
-                default -> System.out.println("Choix invalide!");
+            app.showMainMenu();
+            try {
+                int choice = app.readInt();
+                switch (choice) {
+                    case 1 -> {
+                        try {
+                            new ClientMode(app, app.cartService, app.orderService, app.inventoryService).start();
+                        } catch (Exception e) {
+                            System.out.println("Erreur dans le mode client : " + e.getMessage());
+                        }
+                    }
+                    case 2 -> {
+                        try {
+                            new InventoryMode(app, app.inventoryService).start();
+                        } catch (Exception e) {
+                            System.out.println("Erreur dans le mode inventaire : " + e.getMessage());
+                        }
+                    }
+                    case 3 -> running = false;
+                    default -> System.out.println("Choix invalide !");
+                }
+            } catch (Exception e) {
+                System.out.println("Entrée invalide, réessayez : " + e.getMessage());
             }
         }
 
-        System.out.println("Au revoir!");
+        System.out.println("Au revoir !");
     }
 
-    // Lecture sécurisée d'un entier
+    private void showMainMenu() {
+        System.out.println("\n=== MENU PRINCIPAL ===");
+        System.out.println("1. Mode Client");
+        System.out.println("2. Mode Inventaire");
+        System.out.println("3. Quitter");
+        System.out.print("Choix: ");
+    }
+
     public int readInt() {
         while (true) {
             try {
-                return Integer.parseInt(sc.nextLine());
+                return Integer.parseInt(scanner.nextLine());
             } catch (NumberFormatException e) {
-                System.out.print("Entrée invalide, réessayez: ");
+                System.out.print("Entrée invalide, veuillez entrer un chiffre: ");
             }
         }
     }
 
-    // Lecture sécurisée d'un double
     public double readDouble() {
         while (true) {
             try {
-                return Double.parseDouble(sc.nextLine());
+                return Double.parseDouble(scanner.nextLine());
             } catch (NumberFormatException e) {
-                System.out.print("Entrée invalide, réessayez: ");
+                System.out.print("Entrée invalide, veuillez entrer un nombre: ");
             }
         }
     }
 
     public String readLine() {
-        return sc.nextLine();
+        return scanner.nextLine();
     }
+
+    // Accesseurs aux services
+    public IInventoryService getInventoryService() { return inventoryService; }
+    public ICartService getCartService() { return cartService; }
+    public IOrderService getOrderService() { return orderService; }
 }

@@ -1,23 +1,21 @@
 package ui;
 
 import app.McDonaldSystem;
-import service.InventoryService;
-import model.Drink;
-import model.MainFood;
-import model.Snack;
 import model.Item;
+import service.IInventoryService;
 
 public class InventoryMode {
 
     private final McDonaldSystem app;
+    private final IInventoryService inventoryService;
 
-    public InventoryMode(McDonaldSystem app) {
+    public InventoryMode(McDonaldSystem app, IInventoryService inventoryService) {
         this.app = app;
+        this.inventoryService = inventoryService;
     }
 
     public void start() {
         boolean isRunning = true;
-
         while (isRunning) {
             System.out.println("\n=== INVENTAIRE ===");
             System.out.println("1. Afficher inventaire");
@@ -27,17 +25,9 @@ public class InventoryMode {
             System.out.println("5. Retour");
             System.out.print("Choix: ");
 
-            int userChoice = 0;
-            try {
-                userChoice = app.readInt();
-            } catch (Exception e) {
-                System.out.println("Entrée invalide. Veuillez entrer un nombre.");
-                app.getScanner().nextLine(); // consommer l'entrée invalide
-                continue;
-            }
-
-            switch (userChoice) {
-                case 1 -> InventoryService.printInventory();
+            int choice = app.readInt();
+            switch (choice) {
+                case 1 -> inventoryService.printInventory();
                 case 2 -> addStock();
                 case 3 -> removeStock();
                 case 4 -> addNewItem();
@@ -48,87 +38,110 @@ public class InventoryMode {
     }
 
     private void addStock() {
-        System.out.print("Nom de l'item: ");
-        String itemName = app.readLine();
-        boolean itemFound = false;
+        try {
+            System.out.print("Nom de l'item: ");
+            String name = app.readLine();
 
-        for (Item item : InventoryService.inventory) {
-            if (item.getName().equalsIgnoreCase(itemName)) {
-                itemFound = true;
-                System.out.print("Quantité à ajouter: ");
-                try {
-                    int quantityToAdd = app.readInt();
-                    item.addStock(quantityToAdd);
-                    System.out.println("Stock ajouté!");
-                } catch (Exception e) {
-                    System.out.println("Quantité invalide.");
-                    app.getScanner().nextLine();
-                }
-                break;
+            var list = inventoryService.getAllItems(); // récupère tous les items
+            Item found = list.stream()
+                    .filter(i -> i.getName().equalsIgnoreCase(name))
+                    .findFirst()
+                    .orElse(null);
+
+            if (found == null) {
+                System.out.println("Item introuvable !");
+                return;
             }
-        }
 
-        if (!itemFound) System.out.println("Item non trouvé.");
+            System.out.print("Quantité à ajouter: ");
+            int qty = app.readInt();
+            if (qty < 0) {
+                System.out.println("Quantité invalide !");
+                return;
+            }
+
+            inventoryService.addStock(found.getName(), qty);
+            System.out.println("Stock ajouté !");
+        } catch (Exception e) {
+            System.out.println("Erreur lors de l'ajout du stock: " + e.getMessage());
+        }
     }
 
     private void removeStock() {
-        System.out.print("Nom de l'item: ");
-        String itemName = app.readLine();
-        boolean itemFound = false;
+        try {
+            System.out.print("Nom de l'item: ");
+            String name = app.readLine();
 
-        for (Item item : InventoryService.inventory) {
-            if (item.getName().equalsIgnoreCase(itemName)) {
-                itemFound = true;
-                System.out.print("Quantité à retirer: ");
-                try {
-                    int quantityToRemove = app.readInt();
-                    if (item.getStock() >= quantityToRemove) {
-                        item.removeStock(quantityToRemove);
-                        System.out.println("Stock retiré!");
-                    } else {
-                        System.out.println("Pas assez de stock!");
-                    }
-                } catch (Exception e) {
-                    System.out.println("Quantité invalide.");
-                    app.getScanner().nextLine();
-                }
-                break;
+            var list = inventoryService.getAllItems(); // récupère tous les items
+            Item found = list.stream()
+                    .filter(i -> i.getName().equalsIgnoreCase(name))
+                    .findFirst()
+                    .orElse(null);
+
+            if (found == null) {
+                System.out.println("Item introuvable !");
+                return;
             }
-        }
 
-        if (!itemFound) System.out.println("Item non trouvé.");
+            System.out.print("Quantité à retirer: ");
+            int qty = app.readInt();
+            if (qty < 0 || qty > found.getStock()) {
+                System.out.println("Quantité invalide ou supérieure au stock actuel !");
+                return;
+            }
+
+            inventoryService.removeStock(found.getName(), qty);
+            System.out.println("Stock retiré !");
+        } catch (Exception e) {
+            System.out.println("Erreur lors du retrait du stock: " + e.getMessage());
+        }
     }
 
     private void addNewItem() {
-        System.out.print("Nom: ");
-        String itemName = app.readLine();
-
-        double itemPrice = 0;
-        int initialStock = 0;
         try {
+            System.out.print("Nom: ");
+            String name = app.readLine();
+            if (name.isBlank()) {
+                System.out.println("Nom invalide !");
+                return;
+            }
+
             System.out.print("Prix: ");
-            itemPrice = app.readDouble();
+            double price = app.readDouble();
+            if (price < 0) {
+                System.out.println("Prix invalide !");
+                return;
+            }
+
             System.out.print("Stock initial: ");
-            initialStock = app.readInt();
+            int stock = app.readInt();
+            if (stock < 0) {
+                System.out.println("Stock invalide !");
+                return;
+            }
+
+            System.out.print("Type (main/snack/drink): ");
+            String type = app.readLine().toLowerCase();
+            if (!type.equals("main") && !type.equals("snack") && !type.equals("drink")) {
+                System.out.println("Type invalide !");
+                return;
+            }
+
+            Item newItem;
+            if (type.equals("drink")) {
+                System.out.print("Taille: ");
+                String size = app.readLine();
+                newItem = new model.Drink(name, price, stock, size);
+            } else if (type.equals("snack")) {
+                newItem = new model.Snack(name, price, stock);
+            } else {
+                newItem = new model.MainFood(name, price, stock);
+            }
+
+            inventoryService.addItem(newItem);
+            System.out.println("Item ajouté !");
         } catch (Exception e) {
-            System.out.println("Prix ou stock invalide.");
-            app.getScanner().nextLine();
-            return;
+            System.out.println("Erreur lors de l'ajout du nouvel item: " + e.getMessage());
         }
-
-        System.out.print("Type (main/snack/drink): ");
-        String itemType = app.readLine();
-
-        if (itemType.equalsIgnoreCase("drink")) {
-            System.out.print("Taille: ");
-            String drinkSize = app.readLine();
-            InventoryService.inventory.add(new Drink(itemName, itemPrice, initialStock, drinkSize));
-        } else if (itemType.equalsIgnoreCase("snack")) {
-            InventoryService.inventory.add(new Snack(itemName, itemPrice, initialStock));
-        } else {
-            InventoryService.inventory.add(new MainFood(itemName, itemPrice, initialStock));
-        }
-
-        System.out.println("Item ajouté!");
     }
 }
