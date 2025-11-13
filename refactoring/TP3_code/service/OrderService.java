@@ -1,47 +1,60 @@
 package service;
 
-import model.*;
+import model.CartItem;
 
 public class OrderService {
+
     public static void placeOrder() {
-        if (CartService.cart.isEmpty()) {
-            System.out.println("\nPanier vide!");
+        if (CartService.getCart().isEmpty()) {
+            System.out.println("\nPanier vide !");
             return;
         }
 
-        boolean stockOk = true;
-        for (CartItem ci : CartService.cart) {
-            if (ci.isTrio) {
-                if (ci.item.stock <= 0 || ci.trioSnack.stock <= 0 || ci.trioDrink.stock <= 0) {
-                    stockOk = false;
-                    System.out.println("Stock insuffisant pour " + ci.getDescription());
+        boolean allStockSufficient = true;
+
+        // Vérification du stock pour chaque élément du panier
+        for (CartItem cartItem : CartService.getCart()) {
+            if (cartItem.isTrio()) {
+                if (cartItem.getItem().getStock() <= 0 ||
+                        cartItem.getTrioSnack().getStock() <= 0 ||
+                        cartItem.getTrioDrink().getStock() <= 0) {
+                    allStockSufficient = false;
+                    System.out.println("Stock insuffisant pour le trio : " + cartItem.getDescription());
                 }
-            } else if (ci.item.stock <= 0) {
-                stockOk = false;
-                System.out.println("Stock insuffisant pour " + ci.item.name);
+            } else if (cartItem.getItem().getStock() <= 0) {
+                allStockSufficient = false;
+                System.out.println("Stock insuffisant pour l'item : " + cartItem.getItem().getName());
             }
         }
 
-        if (!stockOk) return;
+        if (!allStockSufficient) return;
 
-        for (CartItem ci : CartService.cart) {
-            if (ci.isTrio) {
-                ci.item.stock--;
-                ci.trioSnack.stock--;
-                ci.trioDrink.stock--;
-            } else {
-                ci.item.stock--;
-            }
-        }
-
-        double total = 0;
+        double totalOrderPrice = 0;
         System.out.println("\n========= REÇU =========");
-        for (CartItem ci : CartService.cart) {
-            System.out.printf("%s - %.2f$\n", ci.getDescription(), ci.getPrice());
-            total += ci.getPrice();
+
+        // Décrémentation du stock et affichage du reçu
+        for (CartItem cartItem : CartService.getCart()) {
+            try {
+                if (cartItem.isTrio()) {
+                    cartItem.getItem().setStock(cartItem.getItem().getStock() - 1);
+                    cartItem.getTrioSnack().setStock(cartItem.getTrioSnack().getStock() - 1);
+                    cartItem.getTrioDrink().setStock(cartItem.getTrioDrink().getStock() - 1);
+                } else {
+                    cartItem.getItem().setStock(cartItem.getItem().getStock() - 1);
+                }
+            } catch (Exception e) {
+                System.out.println("Erreur lors de la mise à jour du stock pour " + cartItem.getDescription());
+                continue;
+            }
+
+            System.out.printf("%s - %.2f$\n", cartItem.getDescription(), cartItem.getPrice());
+            totalOrderPrice += cartItem.getPrice();
         }
-        System.out.printf("------------------------\nTOTAL: %.2f$\n", total);
+
+        System.out.printf("------------------------\nTOTAL: %.2f$\n", totalOrderPrice);
         System.out.println("========================");
+
+        // Vider le panier après la commande
         CartService.clear();
     }
 }
