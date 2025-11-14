@@ -1,10 +1,10 @@
 package model;
 
 public class Item {
-    protected String name;
-    protected double price;
-    protected int stock;
-    protected String type;
+    private String name;
+    private double price;
+    private int stock;
+    private String type;
 
     public Item(String name, double price, int stock, String type) {
         this.name = name;
