@@ -11,13 +11,17 @@ public class McDonaldSystem {
     private final Scanner scanner = new Scanner(System.in);
 
     // Services avec interfaces
-    private final IInventoryService inventoryService = new InventoryService();
-    private final ICartService cartService = new CartService();
-    private final IOrderService orderService = new OrderService(cartService);
+
+    private static IInventoryService inventoryService;
+    private static ICartService cartService ;
+    private static IOrderService orderService;
 
     public Scanner getScanner() { return scanner; }
 
     public static void main(String[] args) {
+        inventoryService = McDonaldServiceFactory.createInventoryService();
+        cartService = McDonaldServiceFactory.createCartService();
+        orderService = McDonaldServiceFactory.createOrderService(cartService);
         McDonaldSystem app = new McDonaldSystem();
         app.inventoryService.addDefaultItems();
 
